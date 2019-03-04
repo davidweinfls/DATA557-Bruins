@@ -1,0 +1,96 @@
+---
+title: "FinalProject-David"
+author: "David Wei"
+date: "3/2/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+d <-read.csv('./dataset/CleanListings.csv')
+d$price <-as.numeric(gsub('[$,]','', d$price))
+d$security_deposit <-as.numeric(gsub('[$,]','', d$security_deposit))
+d$cleaning_fee <-as.numeric(gsub('[$,]','', d$cleaning_fee))
+d$host_is_superhost <-as.numeric(d$host_is_superhost=="t")
+
+CleanListings <- read.csv('./dataset/CleanListings.csv')
+
+```
+
+```{r}
+getCoef <- function(response, factor_name) {
+  output = summary(lm(d[,response] ~ d[,factor_name]))$coef
+  intercept = output[[1]]
+  coef = as.numeric(output[[2]])
+  
+  coef
+}
+```
+
+```{r}
+#price
+
+summary(lm(d[,'price'] ~ d[,'bathrooms']))$coef
+summary(lm(d[,'price'] ~ d[,'bathrooms']))$coef[[2]]
+
+factors = c("host_response_time", "host_response_rate", "reviews_per_month", "host_is_superhost", "host_neighbourhood", "host_total_listings_count", "host_identity_verified", "neighbourhood_cleansed", "is_location_exact", "property_type", "room_type", "accommodates", "bathrooms", "bedrooms", "beds", "bed_type", "square_feet", "security_deposit", "cleaning_fee",  "minimum_nights", "maximum_nights", "number_of_reviews", "review_scores_rating", "instant_bookable","reviews_per_month")
+
+getCoef('price', 'bedrooms')
+```
+
+```{r}
+for (i in 1:length(factors)) {
+  print(factors[i])
+  #cat("Factor", factors[i], "has coef: ", getCoef('price', factors[i]), "\n")
+  print(getCoef('price', factors[i]))
+}
+
+par(mfrow=c(2,2), mar=c(5,4,2,1))
+# price
+#plot(lm(price ~ property_type+room_type+bathrooms+bedrooms+host_neighbourhood+beds+host_verifications_reviews+neighbourhood_group_cleansed+review_scores_checkin+accommodates+guests_included+review_scores_accuracy+host_is_superhost, data = d))
+
+plot(lm(review_scores_value ~ review_scores_communication+review_scores_accuracy+review_scores_checkin+review_scores_location+review_scores_cleanliness+require_guest_profile_picture+require_guest_phone_verification+host_is_superhost+host_verifications_identity_manual+host_verifications_manual_online+neighbourhood+host_neighbourhood+host_identity_verified+instant_bookable+room_type, data = d))
+
+```
+
+```{r}
+
+#DependentVar <- 'price' 
+DependentVar <- 'review_scores_value' 
+PredictorVars <- colnames(CleanListings)
+PredictorVars <- PredictorVars[PredictorVars!=DependentVar & !startsWith(PredictorVars, 'amenities')]
+
+ResultDF <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(ResultDF) <- c('DependentVar', 'PredictorVar', 'PredictorCoeff', 'PredictorSignificanct')
+
+for (PredictorVar in PredictorVars) {
+	CoeffVal <- NA
+	SignVal <- NA
+	if (length(unique(CleanListings[, PredictorVar])) < 200 & length(unique(CleanListings[, PredictorVar])) >= 2) {
+		tryCatch(
+			{
+				summaryLmModel <- summary(lm(CleanListings[,DependentVar] ~ CleanListings[,PredictorVar]))
+				CoeffVal <-	abs(summaryLmModel$coefficients[2, 'Estimate'])
+				if (summaryLmModel$coefficients[2, 'Pr(>|t|)'] <= 0.001) {
+					SignVal <- '<0.001'
+				} else if (summaryLmModel$coefficients[2, 'Pr(>|t|)'] <= 0.05) {
+					SignVal <- '<0.05'
+				} else {
+					SignVal <- 'Insignif'
+				}
+			}, error = function(e) print(e)
+		)
+	}
+	AppDF <- data.frame(DependentVar = DependentVar,
+											PredictorVar = PredictorVar, 
+											PredictorCoeff = CoeffVal,
+											PredictorSignificanct = SignVal)
+	ResultDF <- rbind(ResultDF, AppDF)
+}
+
+```
+
+
