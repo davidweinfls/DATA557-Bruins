@@ -52,14 +52,14 @@ par(mfrow=c(2,2), mar=c(5,4,2,1))
 # price
 #plot(lm(price ~ property_type+room_type+bathrooms+bedrooms+host_neighbourhood+beds+host_verifications_reviews+neighbourhood_group_cleansed+review_scores_checkin+accommodates+guests_included+review_scores_accuracy+host_is_superhost, data = d))
 
-plot(lm(review_scores_value ~ review_scores_communication+review_scores_accuracy+review_scores_checkin+review_scores_location+review_scores_cleanliness+require_guest_profile_picture+require_guest_phone_verification+host_is_superhost+host_verifications_identity_manual+host_verifications_manual_online+neighbourhood+host_neighbourhood+host_identity_verified+instant_bookable+room_type, data = d))
+plot(lm(review_scores_rating ~ review_scores_communication+review_scores_accuracy+review_scores_checkin+review_scores_location+review_scores_cleanliness+require_guest_profile_picture+require_guest_phone_verification+host_is_superhost+host_verifications_identity_manual+host_verifications_manual_online+neighbourhood+host_neighbourhood+host_identity_verified+instant_bookable+room_type, data = d))
 
 ```
 
 ```{r}
 
 #DependentVar <- 'price' 
-DependentVar <- 'review_scores_value' 
+DependentVar <- 'review_scores_rating'
 PredictorVars <- colnames(CleanListings)
 PredictorVars <- PredictorVars[PredictorVars!=DependentVar & !startsWith(PredictorVars, 'amenities')]
 
