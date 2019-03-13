@@ -1,0 +1,64 @@
+---
+title: "Superhost"
+author: "Cathy Jia"
+date: "3/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+d <- read.csv('CleanListing_SeaWA.csv')
+d$host_is_superhost <- as.numeric(d$host_is_superhost=="t")
+```
+
+Notice that one host may have more than one listing. Since we need to take one observation per host, than we compute the review scores by taking average review scores.
+
+```{r}
+# one host one data
+host <- data.frame(d$host_id,d$host_is_superhost,d$review_scores_accuracy,d$review_scores_cleanliness,d$review_scores_checkin,d$review_scores_communication,d$review_scores_location,d$review_scores_value)
+colnames(host) <- c('id','superhost','accuracy','cleanliness','checkin','communication','location','value')
+idList <- c()
+for (i in 1:nrow(host)) {
+  id <- host[i,]$id
+  if (!is.element(id,idList)) # 5302
+    idList <- c(idList,id)
+}
+newHost <- host
+for (ID in idList) {
+  idx <- which(host$id==ID)
+  for (i in idx) {
+    newHost[i,]$accuracy <- mean(host[idx,]$accuracy)
+    newHost[i,]$cleanliness <- mean(host[idx,]$cleanliness)
+    newHost[i,]$checkin <- mean(host[idx,]$checkin)
+    newHost[i,]$communication <- mean(host[idx,]$communication)
+    newHost[i,]$location <- mean(host[idx,]$location)
+    newHost[i,]$value <- mean(host[idx,]$value)
+  }
+}
+newHost <- unique(newHost)
+```
+
+logistic why?
+why adjustment (correlation)
+
+```{r}
+library(DT)
+fit <- glm(superhost~accuracy+communication+cleanliness+location+checkin+value, data=newHost,family=binomial)
+summary(fit)
+datatable(round(summary(fit)$coef,3))
+```
+
+```{r}
+datatable(round(exp(summary(fit)$coef),3))
+```
+
+
+```{r}
+scores <-data.frame(newHost$accuracy,newHost$cleanliness,newHost$checkin,newHost$communication,newHost$location,newHost$value)
+colnames(scores) <- c('accuracy','cleanliness','checkin','communication','location','value')
+datatable(round(cor(scores,use = "complete.obs"),3))
+pairs(~accuracy+cleanliness+checkin+communication+location+value, data=scores)
+```
